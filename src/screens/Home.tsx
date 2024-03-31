@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { axiosInstance } from '../api/axios';
 import Loading from '../components/Loading';
 import RNPickerSelect from 'react-native-picker-select';
@@ -7,6 +7,7 @@ import { formatDateToDDMMYYYY } from '../util/Dates';
 
 export const Home = () => {
     const [loadingState, setLoadingState] = React.useState<"error" | "ok" | "loading">("loading");
+    const [error, setError] = React.useState<string>("");
     const [responseData, setResponseData] = React.useState<HomeData>();
     const [dateData, setDateData] = React.useState<Data>();
     const [selectedDate, setSelectedDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
@@ -15,6 +16,16 @@ export const Home = () => {
     const handleNumberChange = (number) => setSelectedNumber(number);
     const handleDataChange = (date) => setSelectedDate(date);
 
+    const showAlert = () => {
+        Alert.alert(
+            'Título da Mensagem',
+            error,
+            [
+                { text: 'OK', onPress: () => console.log('OK Pressed') }
+            ],
+            { cancelable: false }
+        );
+    };
     React.useEffect(() => {
         const fetchData = async () => {
             setLoadingState("loading");
@@ -25,10 +36,12 @@ export const Home = () => {
                 setLoadingState("ok");
             } catch (error) {
                 setLoadingState("error");
+                setError(error);
                 console.error('Error fetching data:', error);
             }
         };
         fetchData();
+
     }, []);
 
     React.useEffect(() => {
@@ -40,6 +53,7 @@ export const Home = () => {
                 setLoadingState("ok");
             } catch (error) {
                 setLoadingState("error");
+                setError(error);
                 console.error('Error fetching data:', error);
             }
         };
@@ -92,6 +106,13 @@ export const Home = () => {
                     </View>
                 </View>
             )}
+
+            {loadingState === "error" && (
+                <>
+                {showAlert()}
+                </>
+            )}
+
         </>
     );
 };
