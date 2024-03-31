@@ -1,32 +1,21 @@
-import * as React from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { axiosInstance } from '../api/axios';
 import Loading from '../components/Loading';
 import RNPickerSelect from 'react-native-picker-select';
 import { formatDateToDDMMYYYY } from '../util/Dates';
 
-export const Home = () => {
-    const [loadingState, setLoadingState] = React.useState<"error" | "ok" | "loading">("loading");
-    const [error, setError] = React.useState<string>("");
-    const [responseData, setResponseData] = React.useState<HomeData>();
-    const [dateData, setDateData] = React.useState<Data>();
-    const [selectedDate, setSelectedDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
-    const [selectedNumber, setSelectedNumber] = React.useState(10);
+export const Home: React.FC = () => {
+    const [loadingState, setLoadingState] = useState<"error" | "ok" | "loading">("loading");
+    const [responseData, setResponseData] = useState<HomeData>();
+    const [dateData, setDateData] = useState<Data>();
+    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [selectedNumber, setSelectedNumber] = useState<number>(10);
 
-    const handleNumberChange = (number) => setSelectedNumber(number);
-    const handleDataChange = (date) => setSelectedDate(date);
+    const handleNumberChange = (number: number) => setSelectedNumber(number);
+    const handleDataChange = (date: string) => setSelectedDate(date);
 
-    const showAlert = () => {
-        Alert.alert(
-            'Título da Mensagem',
-            error,
-            [
-                { text: 'OK', onPress: () => console.log('OK Pressed') }
-            ],
-            { cancelable: false }
-        );
-    };
-    React.useEffect(() => {
+    useEffect(() => {
         const fetchData = async () => {
             setLoadingState("loading");
             try {
@@ -36,15 +25,13 @@ export const Home = () => {
                 setLoadingState("ok");
             } catch (error) {
                 setLoadingState("error");
-                setError(error);
                 console.error('Error fetching data:', error);
             }
         };
         fetchData();
-
     }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoadingState("loading");
@@ -53,14 +40,13 @@ export const Home = () => {
                 setLoadingState("ok");
             } catch (error) {
                 setLoadingState("error");
-                setError(error);
                 console.error('Error fetching data:', error);
             }
         };
         fetchData();
     }, [selectedDate, selectedNumber]);
 
-    const generatePickerItems = (maxDatesCount) => {
+    const generatePickerItems = (maxDatesCount: number) => {
         const items = [];
         for (let i = 10; i <= 100; i += 10) {
             if (i <= maxDatesCount) {
@@ -105,12 +91,6 @@ export const Home = () => {
                         <Loading />
                     </View>
                 </View>
-            )}
-
-            {loadingState === "error" && (
-                <>
-                {showAlert()}
-                </>
             )}
 
         </>
