@@ -3,6 +3,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { axiosInstance } from '../api/axios';
 import Loading from '../components/Loading';
 import RNPickerSelect from 'react-native-picker-select';
+import { Picker } from '@react-native-picker/picker';
 import { formatDateToDDMMYYYY } from '../util/Dates';
 
 const Home: React.FC = () => {
@@ -17,10 +18,11 @@ const Home: React.FC = () => {
         const fetchData = async () => {
             setLoadingState("loading");
             try {
-                const responseDates = await axiosInstance.get<Data>('available');
-                setDateData(responseDates.data);
-                setSelectedDate(responseDates.data.dates[0]);
-                setLoadingState("ok");
+                await axiosInstance.get<Data>('available').then((response) => {
+                    setDateData(response.data);
+                    setSelectedDate(response.data.dates[response.data.dates.length-1]);
+                    setLoadingState("ok");
+                });
             } catch (error) {
                 handleFetchError(error);
             }
@@ -32,9 +34,10 @@ const Home: React.FC = () => {
         const fetchData = async () => {
             setLoadingState("loading");
             try {
-                const response = await axiosInstance.get<HomeData>(`temp/date/${selectedDate}/${selectedNumber}`);
-                setResponseData(response.data);
-                setLoadingState("ok");
+                await axiosInstance.get<HomeData>(`temp/date/${selectedDate}/${selectedNumber}`).then((response) => {
+                    setResponseData(response.data);
+                    setLoadingState("ok");
+                });
             } catch (error) {
                 handleFetchError(error);
             }
@@ -51,15 +54,6 @@ const Home: React.FC = () => {
         console.error('Error fetching data:', error);
     };
 
-    const showAlert = () => {
-        Alert.alert(
-            'Título da Mensagem',
-            error,
-            [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-            { cancelable: false }
-        );
-    };
-
     const generatePickerItems = (maxDatesCount: number) => {
         const items = [];
         for (let i = 10; i <= 100; i += 10) {
@@ -72,47 +66,52 @@ const Home: React.FC = () => {
     };
 
     return (
-        <>
-            <View style={styles.container}>
-                {dateData && responseData && <RNPickerSelect
-                    value={selectedDate}
-                    onValueChange={handleDataChange}
-                    items={dateData.dates.map((date) => ({
-                        label: formatDateToDDMMYYYY(date),
-                        value: date
-                    }))}
-                    style={pickerSelectStyles}
-                />}
+        <View style={styles.container}>
+            <View style={styles.center}>
+                {dateData && responseData && (
+                    <Picker
+                        selectedValue={selectedDate}
+                        style={styles.dropdown}
+                        onValueChange={handleDataChange}>
+                        {dateData.dates.map((date) => (
+                            <Picker.Item key={date} label={formatDateToDDMMYYYY(date)} value={date} />
+                        ))}
+                    </Picker>
+                )}
 
-                {dateData && responseData && <RNPickerSelect
-                    value={selectedNumber}
-                    onValueChange={handleNumberChange}
-                    items={generatePickerItems(responseData.maxDatesCount)}
-                    style={pickerSelectStyles}
-                />}
+                {dateData && responseData && (
+                    <View style={styles.dropdown}>
+                        <Picker
+                            selectedValue={selectedNumber}
+                            style={styles.dropdown}
+                            onValueChange={handleNumberChange}>
+                            {generatePickerItems(responseData.maxDatesCount).map((date) => (
+                                <Picker.Item key={date.value} label={date.label} value={date.value} />
+                            ))}
+                        </Picker>
+                    </View>
+                )}
+                {loadingState !== "loading" && responseData && dateData && (
+                    <Text style={styles.number}>
+                        {responseData.averageTemperature && responseData.averageTemperature?.toFixed(2)}°C
+                    </Text>
+                )}
             </View>
 
-            {responseData && dateData && (
-                <View style={styles.container}>
-                    <View style={styles.center}>
-                        <Text style={styles.number}>
-                            {responseData.averageTemperature && responseData.averageTemperature?.toFixed(2)}°C
-                        </Text>
+            {
+                loadingState === "loading" && (
+                    <View style={styles.container}>
+                        <View style={styles.center}>
+                            <Loading />
+                        </View>
                     </View>
-                </View>
-            )}
+                )
+            }
 
-            {loadingState === "loading" && (
-                <View style={styles.container}>
-                    <View style={styles.center}>
-                        <Loading />
-                    </View>
-                </View>
-            )}
-
-            {error !== "" && showAlert()}
-
-        </>
+            <View style={styles.container}>
+                <Text>{error.toString()}</Text>
+            </View>
+        </View >
     );
 };
 
@@ -122,6 +121,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    dropdown: {
+        height: 50,
+        width: 400,
+    },
     center: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -129,29 +132,6 @@ const styles = StyleSheet.create({
     number: {
         fontSize: 48,
         fontWeight: 'bold',
-    },
-});
-
-const pickerSelectStyles = StyleSheet.create({
-    inputIOS: {
-        fontSize: 16,
-        paddingVertical: 12,
-        paddingHorizontal: 10,
-        borderWidth: 1,
-        borderColor: 'gray',
-        borderRadius: 4,
-        color: 'black',
-        paddingRight: 30,
-    },
-    inputAndroid: {
-        fontSize: 16,
-        paddingHorizontal: 10,
-        paddingVertical: 8,
-        borderWidth: 0.5,
-        borderColor: 'purple',
-        borderRadius: 8,
-        color: 'black',
-        paddingRight: 30,
     },
 });
 
