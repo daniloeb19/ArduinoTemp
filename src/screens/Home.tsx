@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { axiosInstance } from '../api/axios';
 import Loading from '../components/Loading';
 import RNPickerSelect from 'react-native-picker-select';
 import { formatDateToDDMMYYYY } from '../util/Dates';
 
-export const Home: React.FC = () => {
+const Home: React.FC = () => {
     const [loadingState, setLoadingState] = useState<"error" | "ok" | "loading">("loading");
     const [responseData, setResponseData] = useState<HomeData>();
     const [dateData, setDateData] = useState<Data>();
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [selectedNumber, setSelectedNumber] = useState<number>(10);
-
-    const handleNumberChange = (number: number) => setSelectedNumber(number);
-    const handleDataChange = (date: string) => setSelectedDate(date);
+    const [error, setError] = useState<string>("");
 
     useEffect(() => {
         const fetchData = async () => {
@@ -24,8 +22,7 @@ export const Home: React.FC = () => {
                 setSelectedDate(responseDates.data.dates[0]);
                 setLoadingState("ok");
             } catch (error) {
-                setLoadingState("error");
-                console.error('Error fetching data:', error);
+                handleFetchError(error);
             }
         };
         fetchData();
@@ -33,18 +30,35 @@ export const Home: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoadingState("loading");
             try {
-                setLoadingState("loading");
                 const response = await axiosInstance.get<HomeData>(`temp/date/${selectedDate}/${selectedNumber}`);
                 setResponseData(response.data);
                 setLoadingState("ok");
             } catch (error) {
-                setLoadingState("error");
-                console.error('Error fetching data:', error);
+                handleFetchError(error);
             }
         };
         fetchData();
     }, [selectedDate, selectedNumber]);
+
+    const handleNumberChange = (number: number) => setSelectedNumber(number);
+    const handleDataChange = (date: string) => setSelectedDate(date);
+
+    const handleFetchError = (error: any) => {
+        setLoadingState("error");
+        setError(error.toString());
+        console.error('Error fetching data:', error);
+    };
+
+    const showAlert = () => {
+        Alert.alert(
+            'Título da Mensagem',
+            error,
+            [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
+            { cancelable: false }
+        );
+    };
 
     const generatePickerItems = (maxDatesCount: number) => {
         const items = [];
@@ -60,7 +74,7 @@ export const Home: React.FC = () => {
     return (
         <>
             <View style={styles.container}>
-                {dateData && <RNPickerSelect
+                {dateData && responseData && <RNPickerSelect
                     value={selectedDate}
                     onValueChange={handleDataChange}
                     items={dateData.dates.map((date) => ({
@@ -77,14 +91,17 @@ export const Home: React.FC = () => {
                     style={pickerSelectStyles}
                 />}
             </View>
-            {loadingState === "ok" && responseData && dateData && (
+
+            {responseData && dateData && (
                 <View style={styles.container}>
                     <View style={styles.center}>
                         <Text style={styles.number}>
-                            {responseData.averageTemperature && responseData.averageTemperature.toFixed(2)}°C
+                            {responseData.averageTemperature && responseData.averageTemperature?.toFixed(2)}°C
                         </Text>
                     </View>
-                </View>)}
+                </View>
+            )}
+
             {loadingState === "loading" && (
                 <View style={styles.container}>
                     <View style={styles.center}>
@@ -93,6 +110,8 @@ export const Home: React.FC = () => {
                 </View>
             )}
 
+            {error !== "" && showAlert()}
+
         </>
     );
 };
@@ -100,8 +119,8 @@ export const Home: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center', // Centralize vertically
-        alignItems: 'center', // Centralize horizontally
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     center: {
         justifyContent: 'center',
@@ -135,3 +154,5 @@ const pickerSelectStyles = StyleSheet.create({
         paddingRight: 30,
     },
 });
+
+export default Home;
