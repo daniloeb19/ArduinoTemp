@@ -1,4 +1,4 @@
-interface Register {
+export interface Register {
     _id: string;
     temp: number;
     date: string;
@@ -6,13 +6,15 @@ interface Register {
     id: string;
 }
 
-interface HomeData {
+export interface HomeData {
     registers: Register[];
     averageTemperature: number;
     count: number;
-    maxDatesCount: number
+    maxDatesCount: number;
+    minTemperatura: number;
+	maxTemperatura: number;
 }
 
-interface Data {
+export interface Data {
     dates: string[];
 }

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { axiosInstance } from '../api/axios';
 import Loading from '../components/Loading';
-import RNPickerSelect from 'react-native-picker-select';
 import { Picker } from '@react-native-picker/picker';
 import { formatDateToDDMMYYYY } from '../util/Dates';
+import { Data, HomeData } from '../interfaces/Temp';
+import { Button } from 'react-native-elements';
 
 const Home: React.FC = () => {
     const [loadingState, setLoadingState] = useState<"error" | "ok" | "loading">("loading");
@@ -13,34 +14,33 @@ const Home: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [selectedNumber, setSelectedNumber] = useState<number>(10);
     const [error, setError] = useState<string>("");
+    const [reload, setReload] = useState<number>(0);
 
     useEffect(() => {
         const fetchData = async () => {
             setLoadingState("loading");
-            try {
-                await axiosInstance.get<Data>('available').then((response) => {
-                    setDateData(response.data);
-                    setSelectedDate(response.data.dates[response.data.dates.length-1]);
-                    setLoadingState("ok");
-                });
-            } catch (error) {
+
+            await axiosInstance.get<Data>('available').then((response) => {
+                setDateData(response.data);
+                setSelectedDate(response.data.dates[response.data.dates.length - 1]);
+                setLoadingState("ok");
+            }).catch((error) => {
                 handleFetchError(error);
-            }
+            })
         };
         fetchData();
-    }, []);
+    }, [reload]);
 
     useEffect(() => {
         const fetchData = async () => {
             setLoadingState("loading");
-            try {
-                await axiosInstance.get<HomeData>(`temp/date/${selectedDate}/${selectedNumber}`).then((response) => {
-                    setResponseData(response.data);
-                    setLoadingState("ok");
-                });
-            } catch (error) {
+
+            await axiosInstance.get<HomeData>(`temp/date/${selectedDate}/${selectedNumber}`).then((response) => {
+                setResponseData(response.data);
+                setLoadingState("ok");
+            }).catch((error) => {
                 handleFetchError(error);
-            }
+            })
         };
         fetchData();
     }, [selectedDate, selectedNumber]);
@@ -65,8 +65,50 @@ const Home: React.FC = () => {
         return items;
     };
 
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        buttonReloadContainer: {
+            width: '100%',
+        },
+        buttonReload: {
+            color: "white",
+            backgroundColor: "black",
+            height: 50,
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
+            borderBottomLeftRadius: 8,
+            borderBottomRightRadius: 8,
+        },
+        dropdown: {
+            height: 50,
+            width: 400,
+        },
+        center: {
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        leftContainer:{
+            alignItems: "flex-start"
+        },
+        number: {
+            fontSize: 48,
+            fontWeight: 'bold',
+        },
+    });
+
     return (
-        <View style={styles.container}>
+        <View style={styles.container} >
+            <View style={styles.buttonReloadContainer}>
+                <Button
+                    title="Pressione-me"
+                    buttonStyle={styles.buttonReload}
+                    onPress={() => setReload((prev) => prev + 1)}
+                />
+            </View>
             <View style={styles.center}>
                 {dateData && responseData && (
                     <Picker
@@ -79,7 +121,7 @@ const Home: React.FC = () => {
                     </Picker>
                 )}
 
-                {dateData && responseData && (
+                {loadingState !== "loading" && dateData && responseData && (
                     <View style={styles.dropdown}>
                         <Picker
                             selectedValue={selectedNumber}
@@ -91,11 +133,23 @@ const Home: React.FC = () => {
                         </Picker>
                     </View>
                 )}
+                <View style={styles.leftContainer}>
                 {loadingState !== "loading" && responseData && dateData && (
                     <Text style={styles.number}>
-                        {responseData.averageTemperature && responseData.averageTemperature?.toFixed(2)}°C
+                        Média: {responseData.averageTemperature && responseData.averageTemperature?.toFixed(2)}°C
                     </Text>
                 )}
+                {loadingState !== "loading" && responseData && dateData && (
+                    <Text style={styles.number}>
+                        Min: {responseData.minTemperatura && responseData.minTemperatura?.toFixed(2)}°C
+                    </Text>
+                )}
+                {loadingState !== "loading" && responseData && dateData && (
+                    <Text style={styles.number}>
+                        Max: {responseData.maxTemperatura && responseData.maxTemperatura?.toFixed(2)}°C
+                    </Text>
+                )}
+                </View>
             </View>
 
             {
@@ -115,24 +169,6 @@ const Home: React.FC = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    dropdown: {
-        height: 50,
-        width: 400,
-    },
-    center: {
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    number: {
-        fontSize: 48,
-        fontWeight: 'bold',
-    },
-});
+
 
 export default Home;
