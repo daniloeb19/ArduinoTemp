@@ -91,20 +91,26 @@ const Home: React.FC = () => {
             justifyContent: 'center',
             alignItems: 'center',
         },
-        leftContainer:{
+        leftContainer: {
             alignItems: "flex-start"
         },
-        number: {
-            fontSize: 48,
+        data: {
+            fontSize: 24,
             fontWeight: 'bold',
+            margin:8
         },
+        flex:{
+            justifyContent: "space-evenly",
+            display: "flex",
+            flexDirection: "row"
+        }
     });
 
     return (
         <View style={styles.container} >
             <View style={styles.buttonReloadContainer}>
                 <Button
-                    title="Pressione-me"
+                    title="Recarregar"
                     buttonStyle={styles.buttonReload}
                     onPress={() => setReload((prev) => prev + 1)}
                 />
@@ -134,21 +140,33 @@ const Home: React.FC = () => {
                     </View>
                 )}
                 <View style={styles.leftContainer}>
-                {loadingState !== "loading" && responseData && dateData && (
-                    <Text style={styles.number}>
-                        Média: {responseData.averageTemperature && responseData.averageTemperature?.toFixed(2)}°C
-                    </Text>
-                )}
-                {loadingState !== "loading" && responseData && dateData && (
-                    <Text style={styles.number}>
-                        Min: {responseData.minTemperatura && responseData.minTemperatura?.toFixed(2)}°C
-                    </Text>
-                )}
-                {loadingState !== "loading" && responseData && dateData && (
-                    <Text style={styles.number}>
-                        Max: {responseData.maxTemperatura && responseData.maxTemperatura?.toFixed(2)}°C
-                    </Text>
-                )}
+                    {loadingState !== "loading" && responseData && dateData && (
+                        <View>
+                            <Text style={styles.data}>
+                                Média: {responseData.averageTemperature && responseData.averageTemperature?.toFixed(2)}°C
+                            </Text>
+                        </View>
+                    )}
+                    {loadingState !== "loading" && responseData && dateData && (
+                        <View style={styles.flex}>
+                            <Text style={styles.data}>
+                                Min: {responseData.min && responseData.min?.temp.toFixed(2)}°C
+                            </Text>
+                            <Text style={styles.data}>
+                                Hora: {responseData.min && responseData.min?.hour}
+                            </Text>
+                        </View>
+                    )}
+                    {loadingState !== "loading" && responseData && dateData && (
+                        <View style={styles.flex}>
+                            <Text style={styles.data}>
+                                Max: {responseData.max && responseData.max.temp?.toFixed(2)}°C
+                            </Text>
+                            <Text style={styles.data}>
+                                Hora: {responseData.max && responseData.max.hour}
+                            </Text>
+                        </View>
+                    )}
                 </View>
             </View>
 

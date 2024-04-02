@@ -6,15 +6,24 @@ export interface Register {
     id: string;
 }
 
+export interface Data {
+    dates: string[];
+}
+
+
 export interface HomeData {
     registers: Register[];
     averageTemperature: number;
     count: number;
     maxDatesCount: number;
-    minTemperatura: number;
-	maxTemperatura: number;
-}
-
-export interface Data {
-    dates: string[];
+    max: {
+        temp: number;
+        date: string;
+        hour: string;
+    };
+    min: {
+        temp: number;
+        date: string;
+        hour: string;
+    };
 }
