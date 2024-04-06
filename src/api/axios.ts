@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { API_URL } from "@env";
 
 export const axiosInstance = axios.create({
-    baseURL: 'https://back-t6au.onrender.com', 
+    baseURL: API_URL, 
     timeout: 10000, 
 });
 
